@@ -12,20 +12,38 @@ class GeminiService:
         if not api_key:
             raise ValueError("GEMINI_API_KEY environment variable is required")
         genai.configure(api_key=api_key)
-        self.model = genai.GenerativeModel('gemini-pro')
-        self.vision_model = genai.GenerativeModel('gemini-pro-vision')
+        # Use gemini-1.5-flash for free tier (faster and free)
+        # gemini-1.5-pro is also available but has rate limits
+        self.model = genai.GenerativeModel('gemini-1.5-flash')
+        self.vision_model = genai.GenerativeModel('gemini-1.5-flash')  # Same model supports vision
 
     def chat(self, message: str, conversation_history: Optional[List[dict]] = None) -> str:
         """Send a chat message to Gemini and get response"""
         try:
+            # Convert conversation history format if needed
             if conversation_history:
-                chat = self.model.start_chat(history=conversation_history)
-                response = chat.send_message(message)
+                # Filter and format history for Gemini
+                formatted_history = []
+                for msg in conversation_history:
+                    if isinstance(msg, dict) and 'role' in msg and 'content' in msg:
+                        formatted_history.append(msg)
+                
+                if formatted_history:
+                    chat = self.model.start_chat(history=formatted_history)
+                    response = chat.send_message(message)
+                else:
+                    response = self.model.generate_content(message)
             else:
                 response = self.model.generate_content(message)
             
-            return response.text
+            if response and hasattr(response, 'text'):
+                return response.text
+            else:
+                return "I apologize, but I couldn't generate a response. Please try again."
         except Exception as e:
+            import traceback
+            print(f"Error in Gemini chat: {str(e)}")
+            traceback.print_exc()
             return f"Error: {str(e)}"
 
     def recognize_ingredients_from_image(self, image_data: bytes) -> List[str]:

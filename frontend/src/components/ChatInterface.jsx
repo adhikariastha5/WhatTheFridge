@@ -34,9 +34,10 @@ function ChatInterface({ conversationId }) {
       });
 
       // Add assistant response to UI
+      const assistantResponse = response.data.response || "I apologize, but I couldn't generate a response. Please try again.";
       setMessages(prev => [...prev, { 
         role: 'assistant', 
-        content: response.data.response 
+        content: assistantResponse
       }]);
 
       // If recipes were updated, show notification

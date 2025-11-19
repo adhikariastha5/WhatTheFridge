@@ -30,10 +30,19 @@ function App() {
       }
 
       const data = await response.json();
-      setRecipes(data.recipes);
-      setConversationId(data.conversation_id);
+      console.log('Recipes response:', data);
+      console.log('Number of recipes:', data.recipes?.length || 0);
+      
+      if (data.recipes && data.recipes.length > 0) {
+        setRecipes(data.recipes);
+        setConversationId(data.conversation_id);
+      } else {
+        setError('No recipes found. Please try different ingredients or check your connection.');
+        setConversationId(data.conversation_id); // Still set conversation ID for chat
+      }
     } catch (err) {
-      setError(err.message);
+      console.error('Error fetching recipes:', err);
+      setError(err.message || 'Failed to fetch recipes. Please try again.');
     } finally {
       setLoading(false);
     }

@@ -68,6 +68,10 @@ async def submit_ingredients(
             image_data=image_data
         )
         
+        # Check for errors in the result
+        if result.get('error'):
+            raise HTTPException(status_code=500, detail=result.get('error'))
+        
         # Create conversation ID
         conversation_id = str(uuid.uuid4())
         conversation_states[conversation_id] = result
@@ -91,8 +95,13 @@ async def submit_ingredients(
             conversation_id=conversation_id
         )
     
+    except HTTPException:
+        raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        import traceback
+        print(f"Error in submit_ingredients: {str(e)}")
+        print(traceback.format_exc())
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 
 @app.post("/api/chat")
